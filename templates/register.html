@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Futuristic Blockchain Registration</title>
+  <link rel="stylesheet" href="/static/register.css">
+</head>
+<body>
+  <main class="main">
+    <canvas id="blockchain-canvas"></canvas>
+    <div class="overlay"></div>
+    
+    <div class="form-container">
+      <div class="register-form">
+        <div class="form-header">
+          <h1 class="form-title">FCD REGISTRATION</h1>
+          <p class="form-subtitle">Create your account to join the network</p>
+        </div>
+
+        <form id="register-form" class="form-fields">
+          <div class="form-group">
+            <div class="label-container">
+              <svg class="label-icon icon" viewBox="0 0 24 24">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <label for="username" class="form-label">Username</label>
+            </div>
+            <div class="input-container">
+              <input
+                id="username"
+                name="username"
+                type="text"
+                class="form-input"
+                placeholder="Choose a username"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="label-container">
+              <svg class="label-icon icon" viewBox="0 0 24 24">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+              <label for="email" class="form-label">Email</label>
+            </div>
+            <div class="input-container">
+              <input
+                id="email"
+                name="email"
+                type="email"
+                class="form-input"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="label-container">
+              <svg class="label-icon icon" viewBox="0 0 24 24">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <label for="password" class="form-label">Password</label>
+            </div>
+            <div class="input-container">
+              <input
+                id="password"
+                name="password"
+                type="password"
+                class="form-input"
+                placeholder="Create a password"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="label-container">
+              <svg class="label-icon icon" viewBox="0 0 24 24">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <label for="confirm-password" class="form-label">Confirm Password</label>
+            </div>
+            <div class="input-container">
+              <input
+                id="confirm-password"
+                name="confirm-password"
+                type="password"
+                class="form-input"
+                placeholder="Confirm your password"
+                required
+              />
+            </div>
+          </div>
+
+          <button type="submit" class="submit-button">
+            <span class="button-content">
+              REGISTER
+              <svg class="button-icon icon" viewBox="0 0 24 24">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </span>
+            <span class="button-bg"></span>
+          </button>
+
+          <div class="login-link">
+            Already have an account? <a href="/login">Login here</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Form handling
+    document.getElementById('register-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const username = document.getElementById('username').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+
+      if (!username || !email || !password || !confirmPassword) {
+        alert('All fields are required!');
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        alert('Passwords do not match!');
+        return;
+      }
+
+      const formData = { username, email, password };
+
+      try {
+        const response = await fetch('/register', {  // Replace with your actual API endpoint
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+
+        if (!response.ok) {
+          if (response.status === 400) {
+            const errorData = await response.json();
+            alert(`Error: ${errorData.message}`);
+          } else {
+            throw new Error("Registration failed");
+          }
+        } else {
+          const result = await response.json();
+          alert(result.message); // Show success message
+
+          // Redirect to login or dashboard
+          window.location.href = "/login";  // Adjust the URL as needed
+        }
+
+      } catch (error) {
+        alert("Error: " + error.message);
+      }
+    });
+
+    // Blockchain Background Animation
+    (function() {
+      const canvas = document.getElementById('blockchain-canvas');
+      const ctx = canvas.getContext('2d');
+
+      // Set canvas dimensions
+      function setCanvasDimensions() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+
+      setCanvasDimensions();
+      window.addEventListener('resize', setCanvasDimensions);
+
+      // Blockchain node class
+      class Node {
+        constructor(x, y, size) {
+          this.x = x;
+          this.y = y;
+          this.size = size;
+          this.color = `rgba(${Math.random() * 100 + 100}, ${Math.random() * 150 + 100}, 255, ${
+            Math.random() * 0.5 + 0.3
+          })`;
+          this.connections = [];
+          this.speed = Math.random() * 0.5 + 0.2;
+          this.angle = Math.random() * Math.PI * 2;
+          this.pulseValue = Math.random();
+          this.pulseSpeed = Math.random() * 0.02 + 0.01;
+        }
+
+        update() {
+          // Move from left to right with slight vertical variation
+          this.x += this.speed;
+          this.y += Math.sin(this.angle) * 0.3;
+          this.angle += 0.02;
+
+          // Reset position when off screen
+          if (this.x > canvas.width + 100) {
+            this.x = -100;
+            this.y = Math.random() * canvas.height;
+          }
+
+          // Pulse effect
+          this.pulseValue += this.pulseSpeed;
+          if (this.pulseValue > 1) this.pulseValue = 0;
+        }
+
+        draw() {
+          // Pulse size effect
+          const pulseSize = this.size * (1 + Math.sin(this.pulseValue * Math.PI * 2) * 0.2);
+
+          // Draw glow
+          const gradient = ctx.createRadialGradient(
+            this.x,
+            this.y,
+            pulseSize * 0.2,
+            this.x,
+            this.y,
+            pulseSize * 2
+          );
+          gradient.addColorStop(0, this.color);
+          gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
+
+          ctx.beginPath();
+          ctx.fillStyle = gradient;
+          ctx.arc(this.x, this.y, pulseSize * 2, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Draw node
+          ctx.beginPath();
+          ctx.fillStyle = this.color;
+          ctx.arc(this.x, this.y, pulseSize, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Draw hexagon shape around node
+          ctx.beginPath();
+          ctx.strokeStyle = this.color;
+          ctx.lineWidth = 1;
+          for (let i = 0; i < 6; i++) {
+            const angle = (Math.PI * 2 * i) / 6;
+            const x = this.x + Math.cos(angle) * (pulseSize * 1.5);
+            const y = this.y + Math.sin(angle) * (pulseSize * 1.5);
+            if (i === 0) {
+              ctx.moveTo(x, y);
+            } else {
+              ctx.lineTo(x, y);
+            }
+          }
+          ctx.closePath();
+          ctx.stroke();
+        }
+
+        connectTo(node) {
+          if (!this.connections.includes(node)) {
+            this.connections.push(node);
+          }
+        }
+
+        drawConnections() {
+          this.connections.forEach((node) => {
+            // Calculate distance
+            const dx = node.x - this.x;
+            const dy = node.y - this.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            // Only draw connections within a certain range
+            if (distance < 200) {
+              // Create gradient for connection
+              const gradient = ctx.createLinearGradient(this.x, this.y, node.x, node.y);
+              gradient.addColorStop(0, this.color);
+              gradient.addColorStop(1, node.color);
+
+              // Draw connection line
+              ctx.beginPath();
+              ctx.strokeStyle = gradient;
+              ctx.lineWidth = 1 * (1 - distance / 200); // Fade out with distance
+              ctx.moveTo(this.x, this.y);
+              ctx.lineTo(node.x, node.y);
+              ctx.stroke();
+
+              // Draw data packets moving along the connection
+              const packetPos = (Date.now() % 3000) / 3000; // 0 to 1 over 3 seconds
+              const packetX = this.x + dx * packetPos;
+              const packetY = this.y + dy * packetPos;
+
+              ctx.beginPath();
+              ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+              ctx.arc(packetX, packetY, 2, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          });
+        }
+      }
+
+      // Create nodes
+      const nodeCount = Math.floor(window.innerWidth / 100); // Adjust density based on screen width
+      const nodes = [];
+
+      for (let i = 0; i < nodeCount; i++) {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        const size = Math.random() * 3 + 2;
+        nodes.push(new Node(x, y, size));
+      }
+
+      // Create DNA-like double helix structure
+      const helixHeight = canvas.height * 0.6;
+      const helixY = canvas.height * 0.2;
+      const helixNodes = [];
+      const helixCount = 20;
+
+      for (let i = 0; i < helixCount; i++) {
+        // First strand
+        const x1 = (canvas.width / helixCount) * i - 200; // Start off-screen
+        const y1 = helixY + Math.sin(i * 0.5) * helixHeight * 0.5;
+        const node1 = new Node(x1, y1, 4);
+        
+        // Second strand
+        const x2 = (canvas.width / helixCount) * i - 200; // Start off-screen
+        const y2 = helixY + Math.sin(i * 0.5 + Math.PI) * helixHeight * 0.5;
+        const node2 = new Node(x2, y2, 4);
+        
+        // Connect the strands
+        if (i > 0) {
+          node1.connectTo(helixNodes[helixNodes.length - 2]);
+          node2.connectTo(helixNodes[helixNodes.length - 1]);
+        }
+        
+        // Connect across strands (like DNA base pairs)
+        node1.connectTo(node2);
+        
+        helixNodes.push(node1, node2);
+      }
+
+      // Connect nodes
+      nodes.forEach((node) => {
+        // Connect to 2-3 random nodes
+        const connectionCount = Math.floor(Math.random() * 2) + 2;
+        for (let i = 0; i < connectionCount; i++) {
+          const randomNode = nodes[Math.floor(Math.random() * nodes.length)];
+          if (randomNode !== node) {
+            node.connectTo(randomNode);
+          }
+        }
+      });
+
+      // Animation loop
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Background gradient
+        const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        bgGradient.addColorStop(0, "rgba(10, 15, 30, 1)");
+        bgGradient.addColorStop(1, "rgba(5, 10, 20, 1)");
+        ctx.fillStyle = bgGradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Update and draw helix nodes
+        helixNodes.forEach((node) => {
+          node.update();
+          node.draw();
+        });
+
+        // Draw connections after all nodes are drawn
+        helixNodes.forEach((node) => {
+          node.drawConnections();
+        });
+
+        // Update and draw regular nodes
+        nodes.forEach((node) => {
+          node.update();
+          node.draw();
+        });
+
+        // Draw connections after all nodes are drawn
+        nodes.forEach((node) => {
+          node.drawConnections();
+        });
+
+        requestAnimationFrame(animate);
+      }
+
+      animate();
+    })();
+  </script>
+</body>
+</html>

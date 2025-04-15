@@ -1,0 +1,1845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FCD Blockchain Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* Reset and base styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+
+    body {
+      color: #ffffff;
+      background-color: #000000;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Main container */
+    .main {
+      position: relative;
+      min-height: 100vh;
+      overflow: hidden;
+      background-color: #000000;
+      padding: 1.5rem;
+    }
+
+    /* Canvas for blockchain animation */
+    #blockchain-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+    }
+
+    /* Gradient overlay */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.8));
+      opacity: 0;
+      animation: fadeIn 1s forwards;
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    /* Dashboard container */
+    .dashboard-container {
+      position: relative;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto 1fr;
+      gap: 1.5rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Dashboard header */
+    .dashboard-header {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      border-radius: 0.75rem;
+      background: linear-gradient(to right, rgba(17, 24, 39, 0.7), rgba(31, 41, 55, 0.7));
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      color: #06b6d4;
+    }
+
+    .logo-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(to right, #06b6d4, #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.025em;
+    }
+
+    .user-menu {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .notification-bell {
+      position: relative;
+      color: #d1d5db;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .notification-bell:hover {
+      color: #06b6d4;
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background-color: #ef4444;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.625rem;
+      font-weight: 700;
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      background: rgba(31, 41, 55, 0.5);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .user-profile:hover {
+      background: rgba(55, 65, 81, 0.5);
+    }
+
+    .user-avatar {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      background: linear-gradient(to bottom right, #06b6d4, #3b82f6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .user-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .user-name {
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .user-role {
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+
+    /* Dashboard cards */
+    .dashboard-card {
+      border-radius: 0.75rem;
+      background: linear-gradient(to bottom right, rgba(17, 24, 39, 0.7), rgba(31, 41, 55, 0.7));
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .dashboard-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(to right, #06b6d4, #3b82f6);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #f3f4f6;
+    }
+
+    .card-icon {
+      width: 1.5rem;
+      height: 1.5rem;
+      color: #06b6d4;
+    }
+
+    .card-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Chart card */
+    .chart-card {
+      grid-column: 1;
+      grid-row: 2;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-container {
+      position: relative;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+
+    .chart-stats {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 1.5rem;
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #06b6d4;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      margin-top: 0.25rem;
+    }
+
+    /* User info card */
+    .user-info-card {
+      grid-column: 2;
+      grid-row: 2;
+    }
+
+    .user-details {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .detail-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(75, 85, 99, 0.3);
+    }
+
+    .detail-icon {
+      width: 1.25rem;
+      height: 1.25rem;
+      color: #06b6d4;
+    }
+
+    .detail-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .detail-label {
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+
+    .detail-value {
+      font-size: 1rem;
+      color: #f3f4f6;
+    }
+
+    .user-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .user-stat {
+      background: rgba(31, 41, 55, 0.5);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .user-stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #06b6d4;
+    }
+
+    .user-stat-label {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      margin-top: 0.25rem;
+    }
+
+    /* Upload certificate card */
+    .upload-card {
+      grid-column: 1 / -1;
+      grid-row: 3;
+    }
+
+    .upload-area {
+      border: 2px dashed rgba(59, 130, 246, 0.3);
+      border-radius: 0.5rem;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: 1rem;
+      transition: all 0.3s;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .upload-area:hover {
+      border-color: #06b6d4;
+      background: rgba(6, 182, 212, 0.05);
+    }
+
+    .upload-area.drag-over {
+      border-color: #06b6d4;
+      background: rgba(6, 182, 212, 0.1);
+    }
+
+    .upload-icon {
+      width: 3rem;
+      height: 3rem;
+      color: #06b6d4;
+      opacity: 0.8;
+    }
+
+    .upload-text {
+      text-align: center;
+    }
+
+    .upload-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #f3f4f6;
+      margin-bottom: 0.5rem;
+    }
+
+    .upload-subtitle {
+      font-size: 0.875rem;
+      color: #9ca3af;
+    }
+
+    .upload-button {
+      background: linear-gradient(to right, #06b6d4, #3b82f6);
+      color: white;
+      border: none;
+      border-radius: 0.375rem;
+      padding: 0.75rem 1.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .upload-button:hover {
+      background: linear-gradient(to right, #0891b2, #2563eb);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+    }
+
+    .upload-button:active {
+      transform: translateY(0);
+    }
+
+    .upload-button-icon {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+
+    .upload-input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .certificate-preview {
+      display: none;
+      width: 100%;
+      margin-top: 1.5rem;
+    }
+
+    .certificate-preview.active {
+      display: block;
+    }
+
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .preview-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #f3f4f6;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .preview-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .preview-action {
+      background: rgba(31, 41, 55, 0.5);
+      border: none;
+      border-radius: 0.375rem;
+      padding: 0.5rem;
+      color: #d1d5db;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .preview-action:hover {
+      background: rgba(55, 65, 81, 0.5);
+      color: #06b6d4;
+    }
+
+    .preview-content {
+      background: rgba(31, 41, 55, 0.5);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      display: flex;
+      gap: 1rem;
+    }
+
+    .preview-icon {
+      width: 3rem;
+      height: 3rem;
+      color: #06b6d4;
+      flex-shrink: 0;
+    }
+
+    .preview-details {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .preview-file-name {
+      font-weight: 600;
+      color: #f3f4f6;
+    }
+
+    .preview-file-info {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      display: flex;
+      gap: 1rem;
+    }
+
+    .preview-progress {
+      width: 100%;
+      height: 4px;
+      background: rgba(75, 85, 99, 0.3);
+      border-radius: 2px;
+      margin-top: 0.5rem;
+      overflow: hidden;
+    }
+
+    .preview-progress-bar {
+      height: 100%;
+      background: linear-gradient(to right, #06b6d4, #3b82f6);
+      width: 0;
+      transition: width 0.5s ease;
+    }
+
+    .submit-certificate {
+      background: linear-gradient(to right, #06b6d4, #3b82f6);
+      color: white;
+      border: none;
+      border-radius: 0.375rem;
+      padding: 0.75rem 1.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+      width: 100%;
+    }
+
+    .submit-certificate:hover {
+      background: linear-gradient(to right, #0891b2, #2563eb);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+    }
+
+    .submit-certificate:active {
+      transform: translateY(0);
+    }
+
+    /* Recent activity section */
+    .recent-activity {
+      grid-column: 1 / -1;
+      grid-row: 4;
+    }
+
+    .activity-list {
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .activity-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      background: rgba(31, 41, 55, 0.5);
+      transition: background 0.2s;
+    }
+
+    .activity-item:hover {
+      background: rgba(55, 65, 81, 0.5);
+    }
+
+    .activity-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      background: rgba(6, 182, 212, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .activity-icon svg {
+      width: 1.25rem;
+      height: 1.25rem;
+      color: #06b6d4;
+    }
+
+    .activity-content {
+      flex: 1;
+    }
+
+    .activity-title {
+      font-weight: 600;
+      color: #f3f4f6;
+      margin-bottom: 0.25rem;
+    }
+
+    .activity-description {
+      font-size: 0.875rem;
+      color: #9ca3af;
+    }
+
+    .activity-time {
+      font-size: 0.75rem;
+      color: #6b7280;
+      white-space: nowrap;
+    }
+
+    /* Responsive design */
+    @media (max-width: 1024px) {
+      .dashboard-container {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-card, .user-info-card {
+        grid-column: 1;
+      }
+
+      .user-info-card {
+        grid-row: 3;
+      }
+
+      .upload-card {
+        grid-row: 4;
+      }
+
+      .recent-activity {
+        grid-row: 5;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .dashboard-header {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .user-stats {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-stats {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .preview-content {
+        flex-direction: column;
+      }
+    }
+
+    /* Animations */
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0px); }
+    }
+
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+
+    .float {
+      animation: float 4s ease-in-out infinite;
+    }
+
+    /* Icons */
+    .icon {
+      display: inline-block;
+      stroke-width: 2;
+      stroke: currentColor;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Tooltip */
+    .tooltip {
+      position: relative;
+    }
+
+    .tooltip:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(17, 24, 39, 0.9);
+      color: #f3f4f6;
+      padding: 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      z-index: 100;
+      margin-bottom: 0.5rem;
+    }
+
+    /* Glowing effects */
+    .glow {
+      position: absolute;
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.3), transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .glow-1 {
+      top: -50px;
+      left: -50px;
+    }
+
+    .glow-2 {
+      bottom: -50px;
+      right: -50px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.3), transparent 70%);
+    }
+  </style>
+</head>
+<body>
+  <main class="main">
+    <canvas id="blockchain-canvas"></canvas>
+    <div class="overlay"></div>
+    
+    <div class="dashboard-container">
+      <!-- Dashboard Header -->
+      <header class="dashboard-header">
+        <div class="logo">
+          <svg class="logo-icon icon" viewBox="0 0 24 24">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+          <h1 class="logo-text">FCD BLOCKCHAIN</h1>
+        </div>
+        
+        <div class="user-menu">
+          <div class="notification-bell tooltip" data-tooltip="Notifications">
+            <svg class="icon" width="24" height="24" viewBox="0 0 24 24">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span class="notification-badge">3</span>
+          </div>
+          
+          <div class="user-profile">
+            <div class="user-avatar">JD</div>
+            <div class="user-info">
+              <span class="user-name">John Doe</span>
+              <span class="user-role">Blockchain Validator</span>
+            </div>
+          </div>
+        </div>
+      </header>
+      
+      <!-- Chart Card -->
+      <section class="dashboard-card chart-card">
+        <div class="glow glow-1"></div>
+        <header class="card-header">
+          <h2 class="card-title">Certificate Distribution</h2>
+          <svg class="card-icon icon" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+        </header>
+        
+        <div class="card-content">
+          <div class="chart-container">
+            <canvas id="certificateChart"></canvas>
+          </div>
+          
+          <div class="chart-legend">
+            <div class="legend-item">
+              <span class="legend-color" style="background-color: rgba(6, 182, 212, 0.8);"></span>
+              <span>Academic</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color" style="background-color: rgba(59, 130, 246, 0.8);"></span>
+              <span>Professional</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color" style="background-color: rgba(139, 92, 246, 0.8);"></span>
+              <span>Technical</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color" style="background-color: rgba(236, 72, 153, 0.8);"></span>
+              <span>Other</span>
+            </div>
+          </div>
+          
+          <div class="chart-stats">
+            <div class="stat-item">
+              <span class="stat-value">42</span>
+              <span class="stat-label">Total Certificates</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">12</span>
+              <span class="stat-label">This Month</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">98%</span>
+              <span class="stat-label">Verification Rate</span>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- User Info Card -->
+      <section class="dashboard-card user-info-card">
+        <div class="glow glow-2"></div>
+        <header class="card-header">
+          <h2 class="card-title">User Information</h2>
+          <svg class="card-icon icon" viewBox="0 0 24 24">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+        </header>
+        
+        <div class="card-content">
+          <div class="user-details">
+            <div class="detail-row">
+              <svg class="detail-icon icon" viewBox="0 0 24 24">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <div class="detail-content">
+                <span class="detail-label">Username</span>
+                <span class="detail-value" id="username">johndoe</span>
+              </div>
+            </div>
+            
+            <div class="detail-row">
+              <svg class="detail-icon icon" viewBox="0 0 24 24">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+              <div class="detail-content">
+                <span class="detail-label">Email</span>
+                <span class="detail-value" id="email">john.doe@example.com</span>
+              </div>
+            </div>
+            
+            <div class="detail-row">
+              <svg class="detail-icon icon" viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <div class="detail-content">
+                <span class="detail-label">Joined</span>
+                <span class="detail-value" id="joined">March 15, 2023</span>
+              </div>
+            </div>
+            
+            <div class="detail-row">
+              <svg class="detail-icon icon" viewBox="0 0 24 24">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+              </svg>
+              <div class="detail-content">
+                <span class="detail-label">Blockchain ID</span>
+                <span class="detail-value">0x7F5EB5bB5cF88cfcEe9613368636f458800e62CB</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="user-stats">
+            <div class="user-stat">
+              <span class="user-stat-value">42</span>
+              <span class="user-stat-label">Certificates</span>
+            </div>
+            <div class="user-stat">
+              <span class="user-stat-value">15</span>
+              <span class="user-stat-label">Verifications</span>
+            </div>
+            <div class="user-stat">
+              <span class="user-stat-value">3</span>
+              <span class="user-stat-label">Pending</span>
+            </div>
+            <div class="user-stat">
+              <span class="user-stat-value" id="trustScore">98%</span>
+              <span class="user-stat-label">Trust Score</span>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Upload Certificate Card -->
+      <section class="dashboard-card upload-card">
+        <header class="card-header">
+          <h2 class="card-title">Upload Certificate</h2>
+          <svg class="card-icon icon" viewBox="0 0 24 24">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+        </header>
+        
+        <div class="card-content">
+          <div class="upload-area" id="upload-area">
+            <svg class="upload-icon icon float" viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            
+            <div class="upload-text">
+              <h3 class="upload-title">Upload Your Certificate</h3>
+              <p class="upload-subtitle">Drag and drop your certificate file here, or click to browse</p>
+              <p class="upload-subtitle">Supports PDF, JPG, PNG (Max 10MB)</p>
+            </div>
+            
+            <button class="upload-button">
+              <svg class="upload-button-icon icon" viewBox="0 0 24 24">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              Select File
+            </button>
+            
+            <input type="file" class="upload-input" id="certificate-upload" accept=".pdf,.jpg,.jpeg,.png">
+          </div>
+          
+          <div class="certificate-preview" id="certificate-preview">
+            <div class="preview-header">
+              <h3 class="preview-title">
+                <svg class="icon" width="20" height="20" viewBox="0 0 24 24">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                Certificate Preview
+              </h3>
+              
+              <div class="preview-actions">
+                <button class="preview-action tooltip" data-tooltip="Remove">
+                  <svg class="icon" width="16" height="16" viewBox="0 0 24 24">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div class="preview-content">
+              <svg class="preview-icon icon" viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+              
+              <div class="preview-details">
+                <div class="preview-file-name" id="preview-file-name">certificate.pdf</div>
+                <div class="preview-file-info">
+                  <span id="preview-file-size">2.4 MB</span>
+                  <span id="preview-file-type">PDF Document</span>
+                </div>
+                <div class="preview-progress">
+                  <div class="preview-progress-bar" id="preview-progress-bar"></div>
+                </div>
+              </div>
+            </div>
+            
+            <button class="submit-certificate" id="submit-certificate">
+              <svg class="icon" width="20" height="20" viewBox="0 0 24 24">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              Register Certificate on Blockchain
+            </button>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Recent Activity Card -->
+      <section class="dashboard-card recent-activity">
+        <header class="card-header">
+          <h2 class="card-title">Recent Activity</h2>
+          <svg class="card-icon icon" viewBox="0 0 24 24">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+        </header>
+        
+        <div class="card-content">
+          <div class="activity-list" id="recentActivity">
+            <div class="activity-item">
+              <div class="activity-icon">
+                <svg class="icon" viewBox="0 0 24 24">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+              </div>
+              <div class="activity-content">
+                <h3 class="activity-title">Certificate Registered</h3>
+                <p class="activity-description">Your "Advanced Blockchain Development" certificate has been successfully registered on the blockchain.</p>
+              </div>
+              <span class="activity-time">2 hours ago</span>
+            </div>
+            
+            <div class="activity-item">
+              <div class="activity-icon">
+                <svg class="icon" viewBox="0 0 24 24">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+              </div>
+              <div class="activity-content">
+                <h3 class="activity-title">Certificate Verified</h3>
+                <p class="activity-description">Your "Data Science Fundamentals" certificate was verified by 3 validators.</p>
+              </div>
+              <span class="activity-time">Yesterday</span>
+            </div>
+            
+            <div class="activity-item">
+              <div class="activity-icon">
+                <svg class="icon" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+              </div>
+              <div class="activity-content">
+                <h3 class="activity-title">Verification Request</h3>
+                <p class="activity-description">Someone requested verification of your "Web Development" certificate.</p>
+              </div>
+              <span class="activity-time">2 days ago</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    // Certificate Chart
+    (function() {
+      const ctx = document.getElementById('certificateChart').getContext('2d');
+      
+      const certificateChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Academic', 'Professional', 'Technical', 'Other'],
+          datasets: [{
+            data: [15, 12, 10, 5],
+            backgroundColor: [
+              'rgba(6, 182, 212, 0.8)',
+              'rgba(59, 130, 246, 0.8)',
+              'rgba(139, 92, 246, 0.8)',
+              'rgba(236, 72, 153, 0.8)'
+            ],
+            borderColor: [
+              'rgba(6, 182, 212, 1)',
+              'rgba(59, 130, 246, 1)',
+              'rgba(139, 92, 246, 1)',
+              'rgba(236, 72, 153, 1)'
+            ],
+            borderWidth: 2,
+            hoverOffset: 15
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '70%',
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              backgroundColor: 'rgba(17, 24, 39, 0.9)',
+              titleColor: '#f3f4f6',
+              bodyColor: '#f3f4f6',
+              bodyFont: {
+                size: 14
+              },
+              padding: 12,
+              displayColors: true,
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.raw || 0;
+                  const total = context.dataset.data.reduce((acc, data) => acc + data, 0);
+                  const percentage = Math.round((value / total) * 100);
+                  return `${label}: ${value} (${percentage}%)`;
+                }
+              }
+            }
+          },
+          animation: {
+            animateScale: true,
+            animateRotate: true
+          }
+        }
+      });
+      
+      // Add center text
+      Chart.register({
+        id: 'centerText',
+        beforeDraw: function(chart) {
+          if (chart.config.type === 'doughnut') {
+            // Get ctx from chart
+            const ctx = chart.ctx;
+            
+            // Get chart area width & height
+            const chartArea = chart.chartArea;
+            const width = chartArea.right - chartArea.left;
+            const height = chartArea.bottom - chartArea.top;
+            const centerX = (chartArea.left + chartArea.right) / 2;
+            const centerY = (chartArea.top + chartArea.bottom) / 2;
+            
+            // Draw total certificates
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = 'bold 24px Inter, sans-serif';
+            ctx.fillStyle = '#f3f4f6';
+            ctx.fillText('42', centerX, centerY - 10);
+            
+            // Draw label
+            ctx.font = '14px Inter, sans-serif';
+            ctx.fillStyle = '#9ca3af';
+            ctx.fillText('Certificates', centerX, centerY + 15);
+            ctx.restore();
+          }
+        }
+      });
+    })();
+    
+    // File Upload Handling
+    (function() {
+      const uploadArea = document.getElementById('upload-area');
+      const certificateUpload = document.getElementById('certificate-upload');
+      const certificatePreview = document.getElementById('certificate-preview');
+      const previewFileName = document.getElementById('preview-file-name');
+      const previewFileSize = document.getElementById('preview-file-size');
+      const previewFileType = document.getElementById('preview-file-type');
+      const progressBar = document.getElementById('preview-progress-bar');
+      const submitButton = document.getElementById('submit-certificate');
+      
+      // Drag and drop events
+      uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('drag-over');
+      });
+      
+      uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('drag-over');
+      });
+      
+      uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('drag-over');
+        
+        if (e.dataTransfer.files.length) {
+          handleFile(e.dataTransfer.files[0]);
+        }
+      });
+      
+      // File input change
+      certificateUpload.addEventListener('change', (e) => {
+        if (e.target.files.length) {
+          handleFile(e.target.files[0]);
+        }
+      });
+      
+      // Handle the selected file
+      function handleFile(file) {
+        // Update preview
+        previewFileName.textContent = file.name;
+        previewFileSize.textContent = formatFileSize(file.size);
+        previewFileType.textContent = getFileTypeLabel(file.type);
+        
+        // Show preview
+        certificatePreview.classList.add('active');
+        
+        // Simulate upload progress
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += 5;
+          progressBar.style.width = `${progress}%`;
+          
+          if (progress >= 100) {
+            clearInterval(interval);
+            // Enable submit button
+            submitButton.disabled = false;
+          }
+        }, 100);
+      }
+      
+      // Format file size
+      function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+      }
+      
+      // Get file type label
+      function getFileTypeLabel(mimeType) {
+        const types = {
+          'application/pdf': 'PDF Document',
+          'image/jpeg': 'JPEG Image',
+          'image/png': 'PNG Image'
+        };
+        
+        return types[mimeType] || 'Unknown File Type';
+      }
+      
+      // Submit certificate
+      submitButton.addEventListener('click', () => {
+        // Simulate blockchain registration
+        submitButton.disabled = true;
+        submitButton.innerHTML = `
+          <svg class="icon" width="20" height="20" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" stroke-dasharray="30 30" fill="none">
+              <animateTransform
+                attributeName="transform"
+                attributeType="XML"
+                type="rotate"
+                from="0 12 12"
+                to="360 12 12"
+                dur="1s"
+                repeatCount="indefinite"
+              />
+            </circle>
+          </svg>
+          Processing...
+        `;
+        
+        setTimeout(() => {
+          // Show success message
+          submitButton.innerHTML = `
+            <svg class="icon" width="20" height="20" viewBox="0 0 24 24">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            Certificate Registered Successfully
+          `;
+          submitButton.style.background = 'linear-gradient(to right, #10b981, #3b82f6)';
+          
+          // Add to recent activity
+          const activityList = document.querySelector('.activity-list');
+          const newActivity = document.createElement('div');
+          newActivity.className = 'activity-item';
+          newActivity.innerHTML = `
+            <div class="activity-icon">
+              <svg class="icon" viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+            </div>
+            <div class="activity-content">
+              <h3 class="activity-title">Certificate Registered</h3>
+              <p class="activity-description">Your "${previewFileName.textContent}" certificate has been successfully registered on the blockchain.</p>
+            </div>
+            <span class="activity-time">Just now</span>
+          `;
+          activityList.insertBefore(newActivity, activityList.firstChild);
+          
+          // Update chart
+          const certificateChart = Chart.getChart('certificateChart');
+          certificateChart.data.datasets[0].data[2] += 1; // Add to Technical category
+          certificateChart.update();
+          
+          // Update stats
+          document.querySelectorAll('.stat-value')[0].textContent = '43';
+          document.querySelectorAll('.user-stat-value')[0].textContent = '43';
+        }, 3000);
+      });
+    })();
+    
+    // Blockchain Background Animation
+    (function() {
+      const canvas = document.getElementById('blockchain-canvas');
+      const ctx = canvas.getContext('2d');
+
+      // Set canvas dimensions
+      function setCanvasDimensions() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+
+      setCanvasDimensions();
+      window.addEventListener('resize', setCanvasDimensions);
+
+      // Blockchain node class
+      class Node {
+        constructor(x, y, size) {
+          this.x = x;
+          this.y = y;
+          this.size = size;
+          this.color = `rgba(${Math.random() * 100 + 100}, ${Math.random() * 150 + 100}, 255, ${
+            Math.random() * 0.5 + 0.3
+          })`;
+          this.connections = [];
+          this.speed = Math.random() * 0.5 + 0.2;
+          this.angle = Math.random() * Math.PI * 2;
+          this.pulseValue = Math.random();
+          this.pulseSpeed = Math.random() * 0.02 + 0.01;
+        }
+
+        update() {
+          // Move from left to right with slight vertical variation
+          this.x += this.speed;
+          this.y += Math.sin(this.angle) * 0.3;
+          this.angle += 0.02;
+
+          // Reset position when off screen
+          if (this.x > canvas.width + 100) {
+            this.x = -100;
+            this.y = Math.random() * canvas.height;
+          }
+
+          // Pulse effect
+          this.pulseValue += this.pulseSpeed;
+          if (this.pulseValue > 1) this.pulseValue = 0;
+        }
+
+        draw() {
+          // Pulse size effect
+          const pulseSize = this.size * (1 + Math.sin(this.pulseValue * Math.PI * 2) * 0.2);
+
+          // Draw glow
+          const gradient = ctx.createRadialGradient(
+            this.x,
+            this.y,
+            pulseSize * 0.2,
+            this.x,
+            this.y,
+            pulseSize * 2
+          );
+          gradient.addColorStop(0, this.color);
+          gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
+
+          ctx.beginPath();
+          ctx.fillStyle = gradient;
+          ctx.arc(this.x, this.y, pulseSize * 2, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Draw node
+          ctx.beginPath();
+          ctx.fillStyle = this.color;
+          ctx.arc(this.x, this.y, pulseSize, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Draw hexagon shape around node
+          ctx.beginPath();
+          ctx.strokeStyle = this.color;
+          ctx.lineWidth = 1;
+          for (let i = 0; i < 6; i++) {
+            const angle = (Math.PI * 2 * i) / 6;
+            const x = this.x + Math.cos(angle) * (pulseSize * 1.5);
+            const y = this.y + Math.sin(angle) * (pulseSize * 1.5);
+            if (i === 0) {
+              ctx.moveTo(x, y);
+            } else {
+              ctx.lineTo(x, y);
+            }
+          }
+          ctx.closePath();
+          ctx.stroke();
+        }
+
+        connectTo(node) {
+          if (!this.connections.includes(node)) {
+            this.connections.push(node);
+          }
+        }
+
+        drawConnections() {
+          this.connections.forEach((node) => {
+            // Calculate distance
+            const dx = node.x - this.x;
+            const dy = node.y - this.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            // Only draw connections within a certain range
+            if (distance < 200) {
+              // Create gradient for connection
+              const gradient = ctx.createLinearGradient(this.x, this.y, node.x, node.y);
+              gradient.addColorStop(0, this.color);
+              gradient.addColorStop(1, node.color);
+
+              // Draw connection line
+              ctx.beginPath();
+              ctx.strokeStyle = gradient;
+              ctx.lineWidth = 1 * (1 - distance / 200); // Fade out with distance
+              ctx.moveTo(this.x, this.y);
+              ctx.lineTo(node.x, node.y);
+              ctx.stroke();
+
+              // Draw data packets moving along the connection
+              const packetPos = (Date.now() % 3000) / 3000; // 0 to 1 over 3 seconds
+              const packetX = this.x + dx * packetPos;
+              const packetY = this.y + dy * packetPos;
+
+              ctx.beginPath();
+              ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+              ctx.arc(packetX, packetY, 2, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          });
+        }
+      }
+
+      // Create nodes
+      const nodeCount = Math.floor(window.innerWidth / 100); // Adjust density based on screen width
+      const nodes = [];
+
+      for (let i = 0; i < nodeCount; i++) {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        const size = Math.random() * 3 + 2;
+        nodes.push(new Node(x, y, size));
+      }
+
+      // Connect nodes
+      nodes.forEach((node) => {
+        // Connect to 2-3 random nodes
+        const connectionCount = Math.floor(Math.random() * 2) + 2;
+        for (let i = 0; i < connectionCount; i++) {
+          const randomNode = nodes[Math.floor(Math.random() * nodes.length)];
+          if (randomNode !== node) {
+            node.connectTo(randomNode);
+          }
+        }
+      });
+
+      // Animation loop
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Background gradient
+        const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        bgGradient.addColorStop(0, "rgba(10, 15, 30, 1)");
+        bgGradient.addColorStop(1, "rgba(5, 10, 20, 1)");
+        ctx.fillStyle = bgGradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Update and draw nodes
+        nodes.forEach((node) => {
+          node.update();
+          node.draw();
+        });
+
+        // Draw connections after all nodes are drawn
+        nodes.forEach((node) => {
+          node.drawConnections();
+        });
+
+        requestAnimationFrame(animate);
+      }
+
+      animate();
+    })();
+
+    async function fetchCertificates() {
+      try {
+        const response = await fetch('/get_certificates');
+        const certificates = await response.json();
+        const certificatesDiv = document.getElementById('certificates');
+        certificates.forEach(cert => {
+          const certDiv = document.createElement('div');
+          certDiv.innerHTML = `
+            <h2>${cert.certificate_name}</h2>
+            <p>Issued by: ${cert.issued_by}</p>
+            <p>Issue Date: ${new Date(cert.issue_date * 1000).toLocaleDateString()}</p>
+            <p>Expiry Date: ${cert.expiry_date ? new Date(cert.expiry_date * 1000).toLocaleDateString() : 'N/A'}</p>
+          `;
+          certificatesDiv.appendChild(certDiv);
+        });
+      } catch (error) {
+        console.error('Error fetching certificates:', error);
+      }
+    }
+
+    fetchCertificates();
+
+    // Replace the static chart with dynamic data from API
+    async function loadDashboardData() {
+      try {
+        const response = await fetch('/api/dashboard-stats');
+        const data = await response.json();
+        
+        // Update stat values
+        document.querySelectorAll('.stat-value')[0].textContent = data.total_certificates;
+        document.querySelectorAll('.stat-value')[1].textContent = data.this_month;
+        document.querySelectorAll('.stat-value')[2].textContent = data.trust_score;
+        
+        // Update user stats
+        document.querySelectorAll('.user-stat-value')[0].textContent = data.total_certificates;
+        
+        // Update chart
+        updateChart(data.chart_labels, data.chart_values);
+        
+        // Load certificates
+        loadCertificates();
+        
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+      }
+    }
+
+    // Update the chart with dynamic data
+    function updateChart(labels, values) {
+      const ctx = document.getElementById('certificateChart').getContext('2d');
+      
+      const certificateChart = new Chart(ctx, {
+        type: 'bar', // Changed to a bar chart for monthly data
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Certificates',
+            data: values,
+            backgroundColor: 'rgba(6, 182, 212, 0.8)',
+            borderColor: 'rgba(6, 182, 212, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Load certificates from API
+    async function loadCertificates() {
+      try {
+        const response = await fetch('/get_certificates');
+        const certificates = await response.json();
+        
+        // Update activity list with real certificates
+        const activityList = document.querySelector('.activity-list');
+        activityList.innerHTML = ''; // Clear existing items
+        
+        certificates.forEach(cert => {
+          const activityItem = document.createElement('div');
+          activityItem.className = 'activity-item';
+          
+          // Format date (assuming issue_date is a string like "2023-03-15")
+          const issueDate = new Date(cert.issue_date);
+          const formattedDate = issueDate.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          });
+          
+          activityItem.innerHTML = `
+            <div class="activity-icon">
+              <svg class="icon" viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+            </div>
+            <div class="activity-content">
+              <h3 class="activity-title">${cert.certificate_name}</h3>
+              <p class="activity-description">Issued by: ${cert.issued_by} to ${cert.owner}</p>
+              <p class="activity-description">Certificate ID: ${cert.certificate_id}</p>
+            </div>
+            <span class="activity-time">${formattedDate}</span>
+          `;
+          
+          activityList.appendChild(activityItem);
+        });
+        
+      } catch (error) {
+        console.error('Error loading certificates:', error);
+      }
+    }
+
+    // Add file upload handling with actual backend interaction
+    document.getElementById('submit-certificate').addEventListener('click', async function() {
+      const fileInput = document.getElementById('certificate-upload');
+      if (!fileInput.files.length) {
+        alert('Please select a file first');
+        return;
+      }
+      
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('certificate_name', file.name); // You can modify this to get from input fields
+      formData.append('issued_by', 'User Upload');
+      formData.append('issue_date', new Date().toISOString().split('T')[0]); // Current date
+      
+      try {
+        this.disabled = true;
+        this.innerHTML = `
+          <svg class="icon" width="20" height="20" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" stroke-dasharray="30 30" fill="none">
+              <animateTransform
+                attributeName="transform"
+                attributeType="XML"
+                type="rotate"
+                from="0 12 12"
+                to="360 12 12"
+                dur="1s"
+                repeatCount="indefinite"
+              />
+            </circle>
+          </svg>
+          Processing...
+        `;
+        
+        const response = await fetch('/upload_certificate', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+          this.innerHTML = `
+            <svg class="icon" width="20" height="20" viewBox="0 0 24 24">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            Certificate Registered Successfully
+          `;
+          this.style.background = 'linear-gradient(to right, #10b981, #3b82f6)';
+          
+          // Refresh dashboard data
+          loadDashboardData();
+        } else {
+          this.innerHTML = `
+            <svg class="icon" width="20" height="20" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            Error: ${result.message}
+          `;
+          this.style.background = 'linear-gradient(to right, #ef4444, #f59e0b)';
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        this.innerHTML = `
+          <svg class="icon" width="20" height="20" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          Upload Failed
+        `;
+        this.style.background = 'linear-gradient(to right, #ef4444, #f59e0b)';
+      } finally {
+        setTimeout(() => {
+          this.disabled = false;
+          this.innerHTML = `
+            <svg class="icon" width="20" height="20" viewBox="0 0 24 24">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            Register Certificate on Blockchain
+          `;
+          this.style.background = 'linear-gradient(to right, #06b6d4, #3b82f6)';
+        }, 5000);
+      }
+    });
+
+    // Initialize dashboard when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      loadDashboardData();
+      
+      // Update user info with session data
+      const userRole = '{{ user.role }}'; // This gets the user role from Flask template
+      const userName = '{{ user.username }}';
+      const userEmail = '{{ user.email }}';
+      
+      document.querySelector('.user-name').textContent = userName || 'John Doe';
+      document.querySelector('.user-role').textContent = userRole === 'admin' ? 'Admin' : 'User';
+      document.querySelector('.detail-value:nth-of-type(1)').textContent = userName || 'johndoe';
+      document.querySelector('.detail-value:nth-of-type(2)').textContent = userEmail || 'john.doe@example.com';
+      
+      // Admin features visibility
+      if (userRole === 'admin') {
+        // Add admin-specific elements or controls
+        const adminControls = document.createElement('div');
+        adminControls.className = 'admin-controls';
+        adminControls.innerHTML = `
+          <button class="upload-button" onclick="location.href='/admin/users'">
+            <svg class="icon" width="20" height="20" viewBox="0 0 24 24">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2
+        `;
+        document.querySelector('.dashboard-header').appendChild(adminControls);
+      }
+    });
+
+    document.addEventListener("DOMContentLoaded", function () {
+        fetchDashboardStats();
+    });
+
+    function fetchDashboardStats() {
+        fetch("/api/dashboard-stats")
+            .then(response => response.json())
+            .then(data => {
+                if (data.user_info) {
+                    // Update User Information
+                    document.getElementById("username").textContent = data.user_info.username;
+                    document.getElementById("email").textContent = data.user_info.email;
+                    document.getElementById("role").textContent = data.user_info.role;
+                    document.getElementById("joined").textContent = data.user_info.joined;
+                }
+
+                if (data.category_data) {
+                    // Update Certificate Distribution Chart
+                    const labels = Object.keys(data.category_data);
+                    const values = Object.values(data.category_data);
+
+                    const ctx = document.getElementById("certificateChart").getContext("2d");
+                    new Chart(ctx, {
+                        type: "doughnut",
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                data: values,
+                                backgroundColor: ["#06b6d4", "#3b82f6", "#f59e0b", "#ef4444"]
+                            }]
+                        }
+                    });
+                }
+
+                if (data.recent_activity) {
+                    // Update Recent Activity
+                    const activityContainer = document.getElementById("recentActivity");
+                    activityContainer.innerHTML = ""; // Clear existing activity
+
+                    data.recent_activity.forEach(activity => {
+                        const activityItem = document.createElement("div");
+                        activityItem.className = "activity-item";
+                        activityItem.innerHTML = `
+                            <p><strong>${activity.certificate_name}</strong> issued by ${activity.issued_by}</p>
+                            <p>Owner: ${activity.owner}</p>
+                            <p>Date: ${new Date(activity.created_at).toLocaleDateString()}</p>
+                        `;
+                        activityContainer.appendChild(activityItem);
+                    });
+                }
+
+                // Update Trust Score
+                document.getElementById("trustScore").textContent = data.trust_score;
+            })
+            .catch(error => {
+                console.error("Error fetching dashboard stats:", error);
+            });
+    }
+
+    function fetchCertificates() {
+        fetch("/get_certificates")
+            .then(response => response.json())
+            .then(data => {
+                const certificatesContainer = document.getElementById("certificatesContainer");
+                certificatesContainer.innerHTML = ""; // Clear existing content
+
+                if (data.length === 0) {
+                    certificatesContainer.innerHTML = "<p>No certificates found.</p>";
+                    return;
+                }
+
+                data.forEach(cert => {
+                    const certificateElement = document.createElement("div");
+                    certificateElement.className = "certificate-item";
+                    certificateElement.innerHTML = `
+                        <h3>${cert.certificate_name || "Unknown Certificate"}</h3>
+                        <p><strong>Issued By:</strong> ${cert.issued_by || "Unknown Issuer"}</p>
+                        <p><strong>Owner:</strong> ${cert.owner || "Unknown Owner"}</p>
+                        <p><strong>Date:</strong> ${new Date(cert.created_at).toLocaleDateString() || "Unknown Date"}</p>
+                    `;
+                    certificatesContainer.appendChild(certificateElement);
+                });
+            })
+            .catch(error => {
+                console.error("Error fetching certificates:", error);
+                const certificatesContainer = document.getElementById("certificatesContainer");
+                certificatesContainer.innerHTML = "<p>Error loading certificates. Please try again later.</p>";
+            });
+    }
+  </script>
+</body>
+</html>

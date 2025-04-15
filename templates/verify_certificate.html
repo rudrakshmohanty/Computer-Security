@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Blockchain Certificate Verification</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            color: #ffffff;
+            background-color: #000000;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Main container */
+        .main {
+            position: relative;
+            min-height: 100vh;
+            overflow: hidden;
+            background-color: #000000;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Canvas for blockchain animation */
+        #blockchain-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+        }
+
+        /* Gradient overlay */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.8));
+            opacity: 0;
+            animation: fadeIn 1s forwards;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        /* Container */
+        .container {
+            position: relative;
+            z-index: 10;
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #06b6d4, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #9ca3af;
+            font-size: 1.125rem;
+        }
+
+        /* Card */
+        .card {
+            border-radius: 0.75rem;
+            background: linear-gradient(to bottom right, rgba(17, 24, 39, 0.7), rgba(31, 41, 55, 0.7));
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(to right, #06b6d4, #3b82f6);
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(75, 85, 99, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #f3f4f6;
+        }
+
+        .card-icon {
+            width: 1.5rem;
+            height: 1.5rem;
+            color: #06b6d4;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Form styles */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #d1d5db;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #f3f4f6;
+            background-color: rgba(31, 41, 55, 0.5);
+            border: 1px solid rgba(75, 85, 99, 0.5);
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #06b6d4;
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.25);
+        }
+
+        .form-control::placeholder {
+            color: #9ca3af;
+        }
+
+        /* File input styling */
+        .file-upload {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            border: 2px dashed rgba(59, 130, 246, 0.3);
+            border-radius: 0.5rem;
+            background-color: rgba(31, 41, 55, 0.3);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .file-upload:hover {
+            border-color: #06b6d4;
+            background-color: rgba(6, 182, 212, 0.05);
+        }
+
+        .file-upload-icon {
+            width: 3rem;
+            height: 3rem;
+            color: #06b6d4;
+            margin-bottom: 1rem;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .file-upload-text {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .file-upload-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #f3f4f6;
+            margin-bottom: 0.5rem;
+        }
+
+        .file-upload-subtitle {
+            font-size: 0.875rem;
+            color: #9ca3af;
+        }
+
+        .file-upload-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-name {
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background-color: rgba(31, 41, 55, 0.5);
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            color: #d1d5db;
+            display: none;
+        }
+
+        .file-name.active {
+            display: block;
+        }
+
+        /* Button styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            line-height: 1.5;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            gap: 0.5rem;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, #06b6d4, #3b82f6);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(to right, #0891b2, #2563eb);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        /* Verification result */
+        .verification-result {
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .verification-result.active {
+            display: block;
+            animation: fadeSlideUp 0.5s forwards;
+        }
+
+        .verification-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #f3f4f6;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .verification-title-icon {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+
+        .alert {
+            padding: 1.25rem;
+            border-radius: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .alert-success {
+            background-color: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.5);
+            color: #d1fae5;
+        }
+
+        .alert-danger {
+            background-color: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #fee2e2;
+        }
+
+        .alert::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .alert-success::before {
+            background-color: #10b981;
+        }
+
+        .alert-danger::before {
+            background-color: #ef4444;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .alert-detail {
+            display: flex;
+            align-items: center;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .alert-detail-label {
+            font-weight: 500;
+            width: 100px;
+            flex-shrink: 0;
+        }
+
+        .alert-detail-value {
+            flex: 1;
+        }
+
+        .alert-detail-value.success {
+            color: #10b981;
+        }
+
+        .alert-detail-value.danger {
+            color: #ef4444;
+        }
+
+        /* Spinner */
+        .spinner {
+            display: inline-block;
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 0.2em solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spinner 0.75s linear infinite;
+        }
+
+        @keyframes spinner {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Animations */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Glowing effects */
+        .glow {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.3), transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glow-1 {
+            top: -50px;
+            left: -50px;
+        }
+
+        .glow-2 {
+            bottom: -50px;
+            right: -50px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.3), transparent 70%);
+        }
+
+        /* Icons */
+        .icon {
+            display: inline-block;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* Responsive design */
+        @media (max-width: 640px) {
+            .container {
+                padding: 0 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .card-header, .card-body {
+                padding: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="main">
+        <canvas id="blockchain-canvas"></canvas>
+        <div class="overlay"></div>
+        
+        <div class="container">
+            <div class="header">
+                <h1>Certificate Verification</h1>
+                <p>Verify the authenticity of blockchain certificates</p>
+            </div>
+            
+            <div class="card">
+                <div class="glow glow-1"></div>
+                <div class="glow glow-2"></div>
+                
+                <div class="card-header">
+                    <svg class="card-icon icon" viewBox="0 0 24 24">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <h2 class="card-title">Upload Certificate for Verification</h2>
+                </div>
+                
+                <div class="card-body">
+                    <form id="verifyCertificateForm" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label for="certificateImage" class="form-label">Upload Certificate Image</label>
+                            <div class="file-upload" id="fileUploadContainer">
+                                <svg class="file-upload-icon icon" viewBox="0 0 24 24">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                <div class="file-upload-text">
+                                    <div class="file-upload-title">Drag and drop your certificate</div>
+                                    <div class="file-upload-subtitle">or click to browse files</div>
+                                </div>
+                                <input type="file" class="file-upload-input" id="certificateImage" name="file" accept="image/*" required>
+                            </div>
+                            <div class="file-name" id="fileName"></div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" id="verifyButton">
+                            <svg class="icon" width="20" height="20" viewBox="0 0 24 24">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                            Verify Certificate
+                        </button>
+                    </form>
+                    
+                    <div class="verification-result" id="verificationResult">
+                        <h3 class="verification-title">
+                            <svg class="verification-title-icon icon" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                            Verification Result
+                        </h3>
+                        <div class="alert" id="verificationMessage"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // File upload handling
+        const fileInput = document.getElementById('certificateImage');
+        const fileUploadContainer = document.getElementById('fileUploadContainer');
+        const fileName = document.getElementById('fileName');
+        
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                fileName.textContent = this.files[0].name;
+                fileName.classList.add('active');
+                fileUploadContainer.style.borderColor = '#06b6d4';
+            } else {
+                fileName.classList.remove('active');
+                fileUploadContainer.style.borderColor = '';
+            }
+        });
+        
+        // Drag and drop functionality
+        fileUploadContainer.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#06b6d4';
+            this.style.backgroundColor = 'rgba(6, 182, 212, 0.05)';
+        });
+        
+        fileUploadContainer.addEventListener('dragleave', function() {
+            this.style.borderColor = '';
+            this.style.backgroundColor = '';
+        });
+        
+        fileUploadContainer.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '';
+            this.style.backgroundColor = '';
+            
+            if (e.dataTransfer.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                
+                // Trigger change event
+                const event = new Event('change');
+                fileInput.dispatchEvent(event);
+            }
+        });
+        
+        // Form submission
+        document.getElementById('verifyCertificateForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            if (!fileInput.files.length) {
+                alert('Please upload a certificate image.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            const verifyButton = document.getElementById('verifyButton');
+            const originalButtonHTML = verifyButton.innerHTML;
+            verifyButton.disabled = true;
+            verifyButton.innerHTML = '<span class="spinner"></span> Verifying...';
+
+            // Simulate verification process
+            setTimeout(() => {
+                const verificationResult = document.getElementById('verificationResult');
+                const verificationMessage = document.getElementById('verificationMessage');
+                
+                // Randomly determine verification result for demo purposes
+                const isVerified = Math.random() > 0.3; // 70% chance of success
+                
+                verificationResult.classList.add('active');
+                
+                if (isVerified) {
+                    const confidence = (Math.random() * 20 + 80).toFixed(2); // 80-100% confidence
+                    verificationMessage.className = 'alert alert-success';
+                    verificationMessage.innerHTML = `
+                        <div class="alert-title">Certificate Successfully Verified</div>
+                        <p>This certificate has been verified on the blockchain and is authentic.</p>
+                        <div class="alert-detail">
+                            <span class="alert-detail-label">Confidence:</span>
+                            <span class="alert-detail-value success">${confidence}%</span>
+                        </div>
+                        <div class="alert-detail">
+                            <span class="alert-detail-label">Fraud:</span>
+                            <span class="alert-detail-value success">No</span>
+                        </div>
+                        <div class="alert-detail">
+                            <span class="alert-detail-label">Timestamp:</span>
+                            <span class="alert-detail-value">${new Date().toLocaleString()}</span>
+                        </div>
+                    `;
+                } else {
+                    const confidence = (Math.random() * 30 + 40).toFixed(2); // 40-70% confidence
+                    verificationMessage.className = 'alert alert-danger';
+                    verificationMessage.innerHTML = `
+                        <div class="alert-title">Certificate Verification Failed</div>
+                        <p>This certificate could not be verified on the blockchain.</p>
+                        <div class="alert-detail">
+                            <span class="alert-detail-label">Confidence:</span>
+                            <span class="alert-detail-value danger">${confidence}%</span>
+                        </div>
+                        <div class="alert-detail">
+                            <span class="alert-detail-label">Fraud:</span>
+                            <span class="alert-detail-value danger">Suspected</span>
+                        </div>
+                        <div class="alert-detail">
+                            <span class="alert-detail-label">Timestamp:</span>
+                            <span class="alert-detail-value">${new Date().toLocaleString()}</span>
+                        </div>
+                    `;
+                }
+                
+                verifyButton.disabled = false;
+                verifyButton.innerHTML = originalButtonHTML;
+            }, 2000);
+        });
+
+        // Blockchain Background Animation
+        (function() {
+            const canvas = document.getElementById('blockchain-canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Set canvas dimensions
+            function setCanvasDimensions() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+
+            setCanvasDimensions();
+            window.addEventListener('resize', setCanvasDimensions);
+
+            // Blockchain node class
+            class Node {
+                constructor(x, y, size) {
+                    this.x = x;
+                    this.y = y;
+                    this.size = size;
+                    this.color = `rgba(${Math.random() * 100 + 100}, ${Math.random() * 150 + 100}, 255, ${
+                        Math.random() * 0.5 + 0.3
+                    })`;
+                    this.connections = [];
+                    this.speed = Math.random() * 0.5 + 0.2;
+                    this.angle = Math.random() * Math.PI * 2;
+                    this.pulseValue = Math.random();
+                    this.pulseSpeed = Math.random() * 0.02 + 0.01;
+                }
+
+                update() {
+                    // Move from left to right with slight vertical variation
+                    this.x += this.speed;
+                    this.y += Math.sin(this.angle) * 0.3;
+                    this.angle += 0.02;
+
+                    // Reset position when off screen
+                    if (this.x > canvas.width + 100) {
+                        this.x = -100;
+                        this.y = Math.random() * canvas.height;
+                    }
+
+                    // Pulse effect
+                    this.pulseValue += this.pulseSpeed;
+                    if (this.pulseValue > 1) this.pulseValue = 0;
+                }
+
+                draw() {
+                    // Pulse size effect
+                    const pulseSize = this.size * (1 + Math.sin(this.pulseValue * Math.PI * 2) * 0.2);
+
+                    // Draw glow
+                    const gradient = ctx.createRadialGradient(
+                        this.x,
+                        this.y,
+                        pulseSize * 0.2,
+                        this.x,
+                        this.y,
+                        pulseSize * 2
+                    );
+                    gradient.addColorStop(0, this.color);
+                    gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
+
+                    ctx.beginPath();
+                    ctx.fillStyle = gradient;
+                    ctx.arc(this.x, this.y, pulseSize * 2, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Draw node
+                    ctx.beginPath();
+                    ctx.fillStyle = this.color;
+                    ctx.arc(this.x, this.y, pulseSize, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Draw hexagon shape around node
+                    ctx.beginPath();
+                    ctx.strokeStyle = this.color;
+                    ctx.lineWidth = 1;
+                    for (let i = 0; i < 6; i++) {
+                        const angle = (Math.PI * 2 * i) / 6;
+                        const x = this.x + Math.cos(angle) * (pulseSize * 1.5);
+                        const y = this.y + Math.sin(angle) * (pulseSize * 1.5);
+                        if (i === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    }
+                    ctx.closePath();
+                    ctx.stroke();
+                }
+
+                connectTo(node) {
+                    if (!this.connections.includes(node)) {
+                        this.connections.push(node);
+                    }
+                }
+
+                drawConnections() {
+                    this.connections.forEach((node) => {
+                        // Calculate distance
+                        const dx = node.x - this.x;
+                        const dy = node.y - this.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        // Only draw connections within a certain range
+                        if (distance < 200) {
+                            // Create gradient for connection
+                            const gradient = ctx.createLinearGradient(this.x, this.y, node.x, node.y);
+                            gradient.addColorStop(0, this.color);
+                            gradient.addColorStop(1, node.color);
+
+                            // Draw connection line
+                            ctx.beginPath();
+                            ctx.strokeStyle = gradient;
+                            ctx.lineWidth = 1 * (1 - distance / 200); // Fade out with distance
+                            ctx.moveTo(this.x, this.y);
+                            ctx.lineTo(node.x, node.y);
+                            ctx.stroke();
+
+                            // Draw data packets moving along the connection
+                            const packetPos = (Date.now() % 3000) / 3000; // 0 to 1 over 3 seconds
+                            const packetX = this.x + dx * packetPos;
+                            const packetY = this.y + dy * packetPos;
+
+                            ctx.beginPath();
+                            ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+                            ctx.arc(packetX, packetY, 2, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    });
+                }
+            }
+
+            // Create nodes
+            const nodeCount = Math.floor(window.innerWidth / 100); // Adjust density based on screen width
+            const nodes = [];
+
+            for (let i = 0; i < nodeCount; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const size = Math.random() * 3 + 2;
+                nodes.push(new Node(x, y, size));
+            }
+
+            // Connect nodes
+            nodes.forEach((node) => {
+                // Connect to 2-3 random nodes
+                const connectionCount = Math.floor(Math.random() * 2) + 2;
+                for (let i = 0; i < connectionCount; i++) {
+                    const randomNode = nodes[Math.floor(Math.random() * nodes.length)];
+                    if (randomNode !== node) {
+                        node.connectTo(randomNode);
+                    }
+                }
+            });
+
+            // Animation loop
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Background gradient
+                const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                bgGradient.addColorStop(0, "rgba(10, 15, 30, 1)");
+                bgGradient.addColorStop(1, "rgba(5, 10, 20, 1)");
+                ctx.fillStyle = bgGradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Update and draw nodes
+                nodes.forEach((node) => {
+                    node.update();
+                    node.draw();
+                });
+
+                // Draw connections after all nodes are drawn
+                nodes.forEach((node) => {
+                    node.drawConnections();
+                });
+
+                requestAnimationFrame(animate);
+            }
+
+            animate();
+        })();
+    </script>
+</body>
+</html>

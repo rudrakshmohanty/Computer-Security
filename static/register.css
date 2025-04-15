@@ -1,0 +1,226 @@
+    /* Reset and base styles */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      }
+  
+      body {
+        color: #ffffff;
+        background-color: #000000;
+        min-height: 100vh;
+        overflow: hidden;
+      }
+  
+      /* Main container */
+      .main {
+        position: relative;
+        display: flex;
+        min-height: 100vh;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        background-color: #000000;
+      }
+  
+      /* Canvas for blockchain animation */
+      #blockchain-canvas {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+      }
+  
+      /* Gradient overlay */
+      .overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.7));
+        opacity: 0;
+        animation: fadeIn 1s forwards;
+      }
+  
+      @keyframes fadeIn {
+        to { opacity: 1; }
+      }
+  
+      /* Registration form container */
+      .form-container {
+        position: relative;
+        z-index: 10;
+        width: 100%;
+        max-width: 32rem;
+        padding: 0 1rem;
+      }
+  
+      /* Registration form */
+      .register-form {
+        border-radius: 0.75rem;
+        background: linear-gradient(to bottom right, #111827, #1f2937);
+        padding: 2rem;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        opacity: 0;
+        transform: translateY(20px);
+        animation: slideUp 0.5s forwards;
+      }
+  
+      @keyframes slideUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+  
+      /* Form header */
+      .form-header {
+        margin-bottom: 2rem;
+        text-align: center;
+      }
+  
+      .form-title {
+        margin-bottom: 0.5rem;
+        font-size: 1.875rem;
+        font-weight: 700;
+        letter-spacing: -0.025em;
+        color: #06b6d4; /* cyan-400 */
+      }
+  
+      .form-subtitle {
+        color: #9ca3af; /* gray-400 */
+      }
+  
+      /* Form fields */
+      .form-fields {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+  
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+  
+      .label-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+  
+      .label-icon {
+        width: 1rem;
+        height: 1rem;
+        color: #06b6d4; /* cyan-400 */
+      }
+  
+      .form-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #d1d5db; /* gray-300 */
+      }
+  
+      .input-container {
+        position: relative;
+      }
+  
+      .form-input {
+        width: 100%;
+        border-radius: 0.375rem;
+        border: 1px solid #374151; /* gray-700 */
+        background-color: #1f2937; /* gray-800 */
+        padding: 0.5rem 1rem;
+        color: #f3f4f6; /* gray-100 */
+        outline: none;
+        transition: all 0.2s;
+      }
+  
+      .form-input:focus {
+        border-color: #06b6d4; /* cyan-500 */
+        box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+      }
+  
+      .form-input::placeholder {
+        color: #6b7280; /* gray-500 */
+      }
+  
+      /* Submit button */
+      .submit-button {
+        position: relative;
+        width: 100%;
+        overflow: hidden;
+        border-radius: 0.375rem;
+        background: linear-gradient(to right, #06b6d4, #3b82f6); /* cyan-500 to blue-500 */
+        padding: 0.5rem 1rem;
+        margin-top: 1.5rem;
+        font-weight: 500;
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+  
+      .submit-button:hover {
+        background: linear-gradient(to right, #0891b2, #2563eb); /* cyan-600 to blue-600 */
+      }
+  
+      .button-content {
+        position: relative;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+  
+      .button-icon {
+        margin-left: 0.25rem;
+        width: 1rem;
+        height: 1rem;
+        transition: transform 0.2s;
+      }
+  
+      .submit-button:hover .button-icon {
+        transform: translateX(4px);
+      }
+  
+      .button-bg {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background: linear-gradient(to right, #22d3ee, #60a5fa); /* cyan-400 to blue-400 */
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+  
+      .submit-button:hover .button-bg {
+        opacity: 1;
+      }
+  
+      /* Login link */
+      .login-link {
+        margin-top: 1.5rem;
+        text-align: center;
+        font-size: 0.875rem;
+        color: #9ca3af; /* gray-400 */
+      }
+  
+      .login-link a {
+        color: #06b6d4; /* cyan-400 */
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+  
+      .login-link a:hover {
+        color: #0891b2; /* cyan-600 */
+      }
+  
+      /* Icons */
+      .icon {
+        display: inline-block;
+        stroke-width: 2;
+        stroke: currentColor;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }

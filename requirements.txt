@@ -1,0 +1,4 @@
+Flask==2.2.3
+mysql-connector-python==8.0.32
+cryptography==39.0.1
+python-dotenv==1.0.0
