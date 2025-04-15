@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="test1.svg" alt="Blockchain Certificate Verification Logo" width="200">
+  <img src="test1.svg" alt="Blockchain Certificate Verification Logo">
 </p>
 
 <h1 align="center">🔗 Blockchain Certificate Verification System 🔗</h1>
@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <img src="https://via.placeholder.com/900x450?text=Futuristic+UI+Showcase" alt="Application Showcase" width="85%">
+  <img src="display/Screenshot 2025-04-01 110626.png" alt="Application Showcase" width="85%">
 </p>
 
 ---
@@ -40,7 +40,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Flask-2.x-000000?style=for-the-badge&logo=flask&logoColor=white" alt="Flask">
-  <img src="https://img.shields.io/badge/SQLite-3-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite">
+  <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL">
   <img src="https://img.shields.io/badge/Ethereum-Solidity-3C3C3D?style=for-the-badge&logo=ethereum&logoColor=white" alt="Ethereum">
   <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white" alt="HTML5">
   <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" alt="CSS3">
